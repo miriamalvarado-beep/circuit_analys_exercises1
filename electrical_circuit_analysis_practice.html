@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Práctica: Análisis de Circuitos Eléctricos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- KaTeX CSS & JS for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="initMathRender()"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Print Styling for Academic Certificate */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; font-size: 12pt; }
+            .card-box { border: 1px solid #ccc !important; box-shadow: none !important; }
+        }
+        .print-only { display: none; }
+        
+        /* SVG circuit diagram interactive styles */
+        .circuit-svg {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .circuit-svg:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- TOP HEADER -->
+    <header class="bg-indigo-900 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-700 p-2.5 rounded-lg shadow-inner">
+                        <i data-lucide="zap" class="w-7 h-7 text-yellow-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Análisis de Circuitos Eléctricos</h1>
+                        <p class="text-indigo-200 text-xs sm:text-sm">Leyes de Ohm, Kirchhoff (LCK/LVK) y Resistencias Equivalentes</p>
+                    </div>
+                </div>
+                
+                <!-- Action Controls -->
+                <div class="flex items-center gap-2">
+                    <button id="btn-config" onclick="toggleProfModal()" class="flex items-center gap-1.5 bg-indigo-800 hover:bg-indigo-700 text-xs sm:text-sm px-3 py-2 rounded-lg transition border border-indigo-600">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>Configurar Profesor</span>
+                    </button>
+                    <button id="btn-cert" onclick="openCertModal()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm px-3.5 py-2 rounded-lg font-medium shadow-md transition">
+                        <i data-lucide="file-check" class="w-4 h-4"></i>
+                        <span>Generar Evidencia</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full no-print">
+        
+        <!-- INSTRUCTIONS & CONVENTIONS PANEL -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+            <div class="flex items-start justify-between cursor-pointer" onclick="toggleInstructions()">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                        <i data-lucide="info" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900">Guía de Inicio y Convenciones de Signo</h2>
+                        <p class="text-xs text-slate-500">Haz clic para desplegar/ocultar las instrucciones completas</p>
+                    </div>
+                </div>
+                <button class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="chevron-down" id="inst-chevron" class="w-5 h-5 transition-transform duration-200"></i>
+                </button>
+            </div>
+            
+            <div id="instructions-content" class="mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600 space-y-3">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                        <h3 class="font-semibold text-slate-800 mb-1 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                            <i data-lucide="compass" class="w-4 h-4 text-indigo-600"></i> Convención del Signo Pasivo & Kirchhoff
+                        </h3>
+                        <ul class="list-disc list-inside space-y-1 text-xs">
+                            <li><strong>Corriente (\(I\)):</strong> Un valor positivo indica que fluye en el sentido de la flecha. Un valor negativo indica sentido opuesto.</li>
+                            <li><strong>LCK (Ley de Corrientes):</strong> La suma de corrientes que entran a un nodo es igual a la suma de corrientes que salen:
+                                <div class="my-1 text-center font-medium">\[ \sum I_{\text{entra}} = \sum I_{\text{sale}} \]</div>
+                            </li>
+                            <li><strong>LVK (Ley de Voltajes):</strong> La suma algebraica de voltajes en un lazo cerrado es cero: \(\sum V = 0\).</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                        <h3 class="font-semibold text-slate-800 mb-1 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                            <i data-lucide="database" class="w-4 h-4 text-emerald-600"></i> Evaluación y Almacenamiento Local
+                        </h3>
+                        <p class="text-xs">
+                            Tus respuestas se evalúan numéricamente considerando tolerancias por redondeo. Puedes introducir valores en notación científica (ej. <code class="bg-slate-200 px-1 rounded">1e-3</code>) o utilizar el selector de unidades. Tienes <strong>intentos ilimitados</strong>. Todo tu progreso se guarda localmente en la memoria de este navegador (<code class="bg-slate-200 px-1 rounded">localStorage</code>).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD & PROGRESS METRICS -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Progress Bar Card -->
+            <div class="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold uppercase text-slate-500 tracking-wider">Progreso de la Actividad</span>
+                        <span id="progress-percent" class="text-sm font-bold text-indigo-600">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                        <div id="progress-bar" class="bg-indigo-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100 text-xs">
+                    <span class="text-slate-500">Requerido por profesor: <strong id="req-count-label" class="text-slate-800">10 / 10</strong> ejercicios</span>
+                    <span id="completion-badge" class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-xs">Pendiente</span>
+                </div>
+            </div>
+
+            <!-- Stats Card 1 -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                    <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Resueltos Correctos</p>
+                    <h3 id="stat-solved" class="text-2xl font-bold text-slate-800">0</h3>
+                    <p class="text-[10px] text-slate-400">Sin ayuda / directo</p>
+                </div>
+            </div>
+
+            <!-- Stats Card 2 -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                    <i data-lucide="help-circle" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Revisados con Apoyo</p>
+                    <h3 id="stat-assisted" class="text-2xl font-bold text-slate-800">0</h3>
+                    <p class="text-[10px] text-slate-400">Tras ver solución + quiz</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TOPIC FILTERS & CONTROLS -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+            <div class="flex flex-wrap gap-2" id="filter-container">
+                <button onclick="filterTopic('all')" class="filter-btn active text-xs font-semibold px-4 py-2 rounded-lg bg-indigo-600 text-white shadow-sm transition">
+                    Todos (10)
+                </button>
+                <button onclick="filterTopic('Ohm-Kirchhoff')" class="filter-btn text-xs font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                    Leyes de Ohm y Kirchhoff (8)
+                </button>
+                <button onclick="filterTopic('Req')" class="filter-btn text-xs font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                    Resistencia Equivalente (2)
+                </button>
+            </div>
+
+            <button onclick="resetProgress()" class="text-xs text-slate-500 hover:text-red-600 flex items-center gap-1 transition">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restablecer Avance
+            </button>
+        </div>
+
+        <!-- EXERCISES GRID CONTAINER -->
+        <div id="exercises-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Dynamic cards rendered by JS -->
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 no-print">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            <p>© Plataforma de Aprendizaje Interactivo de Ingeniería Eléctrica. Basado en el banco de ejercicios oficial.</p>
+            <p class="mt-1 text-slate-400">Evaluación cualitativa formativa • Intentos ilimitados sin penalización.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: SVG DIAGRAM ZOOM -->
+    <div id="modal-zoom" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative">
+            <button onclick="closeZoomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full bg-slate-100">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 id="modal-zoom-title" class="text-lg font-bold text-slate-800 mb-4">Esquema Ampliado del Circuito</h3>
+            <div id="modal-zoom-svg-container" class="flex justify-center items-center bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <!-- SVG injected here -->
+            </div>
+            <div class="mt-4 text-right">
+                <button onclick="closeZoomModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PROFESSOR CONFIGURATION -->
+    <div id="modal-prof" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i> Configuración del Profesor
+                </h3>
+                <button onclick="toggleProfModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="space-y-4 text-sm text-slate-600">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mínimo de Ejercicios Requeridos para Finalizar:</label>
+                    <input type="number" id="prof-min-req" min="1" max="10" value="10" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <p class="text-[11px] text-slate-400 mt-1">Total disponible en la plataforma: 10 ejercicios.</p>
+                </div>
+                <div class="p-3 bg-indigo-50 rounded-lg text-xs text-indigo-800">
+                    <strong>Nota docente:</strong> El alumno deberá completar o revisar con apoyo la cantidad fijada de ejercicios para desbloquear la reflexión final y exportar la evidencia.
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="toggleProfModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-xs font-medium">Cancelar</button>
+                <button onclick="saveProfSettings()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: COMPREHENSION QUIZ (FOR ASSISTED REVIEWS) -->
+    <div id="modal-quiz" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Verificación de Comprensión</h3>
+                    <p class="text-xs text-slate-500">Para marcar como "Revisado con apoyo"</p>
+                </div>
+            </div>
+            
+            <p id="quiz-question-text" class="text-sm text-slate-700 mb-4 font-medium bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <!-- Question dynamically inserted -->
+            </p>
+
+            <div id="quiz-options-container" class="space-y-2 mb-4">
+                <!-- Radio options inserted -->
+            </div>
+
+            <div id="quiz-error" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-lg mb-3">
+                Respuesta incorrecta. Revisa el procedimiento antes de responder de nuevo.
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeQuizModal()" class="px-3.5 py-2 text-xs border border-slate-300 text-slate-600 rounded-lg font-medium">Cancelar</button>
+                <button onclick="submitQuizAnswer()" class="px-4 py-2 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium">Confirmar y Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: EVIDENCE / CERTIFICATE GENERATOR -->
+    <div id="modal-cert" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl my-8">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="award" class="w-6 h-6 text-emerald-600"></i> Evidencia de Trabajo Académico
+                </h3>
+                <button onclick="closeCertModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="cert-form-step" class="space-y-4">
+                <p class="text-sm text-slate-600">Completa tus datos personales y la reflexión requerida para emitir tu comprobante de práctica.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo del Estudiante *</label>
+                        <input type="text" id="student-name" placeholder="Ej. Juan Pérez López" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Matrícula / Código Estudiantil *</label>
+                        <input type="text" id="student-id" placeholder="Ej. A01234567" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Reflexión Final Obligatoria (Error corregido o concepto clave aprendido) *</label>
+                    <textarea id="student-reflection" rows="3" placeholder="Describe brevemente una duda resuelta, un error común detectado durante la resolución o el concepto de Kirchhoff/Ohm que mejor aplicaste..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong>Aviso de Autenticidad e Integración LMS:</strong> Este comprobante refleja el progreso grabado localmente en la sesión del navegador. En un entorno institucional, la sincronización de calificaciones automáticas requeriría un backend integrado mediante un estándar como LTI (Learning Tools Interoperability) con Canvas / Moodle / Blackboard.
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="closeCertModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-xs font-medium">Cancelar</button>
+                    <button onclick="generatePrintableCert()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-md">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Generar Imprimible / PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT ONLY REPORT TEMPLATE -->
+    <div id="print-certificate" class="print-only p-8">
+        <div class="border-b-2 border-indigo-900 pb-4 mb-6 flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-950">REPORTE DE PRÁCTICA FORMATIVA</h1>
+                <h2 class="text-sm text-slate-600">Análisis de Circuitos Eléctricos - Leyes de Ohm y Kirchhoff</h2>
+            </div>
+            <div class="text-right text-xs text-slate-500">
+                <p>Fecha de emisión: <span id="print-date"></span></p>
+                <p>Plataforma Virtual v2.5</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6 text-sm bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div>
+                <p><strong>Estudiante:</strong> <span id="print-student-name"></span></p>
+                <p><strong>Matrícula:</strong> <span id="print-student-id"></span></p>
+            </div>
+            <div>
+                <p><strong>Criterio de Evaluación:</strong> Realizado / Actividad Formativa</p>
+                <p><strong>Ejercicios requeridos completados:</strong> <span id="print-completed-ratio"></span></p>
+            </div>
+        </div>
+
+        <h3 class="text-md font-bold mb-2 text-slate-800">Desglose Detallado de Ejercicios Trabajos</h3>
+        <table class="w-full text-xs text-left border-collapse border border-slate-300 mb-6">
+            <thead>
+                <tr class="bg-slate-100">
+                    <th class="border border-slate-300 p-2">#</th>
+                    <th class="border border-slate-300 p-2">Tema</th>
+                    <th class="border border-slate-300 p-2">Estado</th>
+                    <th class="border border-slate-300 p-2">Intentos Realizados</th>
+                    <th class="border border-slate-300 p-2">Modo de Resolución</th>
+                </tr>
+            </thead>
+            <tbody id="print-table-body">
+                <!-- Rows injected dynamically -->
+            </tbody>
+        </table>
+
+        <div class="mb-6">
+            <h3 class="text-md font-bold mb-1 text-slate-800">Reflexión del Estudiante sobre el Aprendizaje:</h3>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded text-xs italic" id="print-reflection-text">
+            </div>
+        </div>
+
+        <div class="mt-12 pt-4 border-t border-slate-300 flex justify-between text-[11px] text-slate-500">
+            <p>Firma digital del alumno / Declaración de autoria honesta.</p>
+            <p>Documento de evidencia autogenerado para entrega académica.</p>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // =========================================================================
+        // 1. DATA BANK: 10 EXERCISES EXACTLY FROM ATTACHED DOC WITH ESCAPED LATEX
+        // =========================================================================
+        const EXERCISES_DATA = [
+            {
+                id: 1,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 1: Circuito de una sola malla (LVK y Ley de Ohm)",
+                statement: "En el circuito cerrado mostrado en la figura, determine el valor de la corriente \\(I\\) que circula en el sentido indicado por la flecha.",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 320 180" class="w-full h-auto max-h-48">
+                    <!-- Wire Loop -->
+                    <rect x="50" y="30" width="220" height="120" fill="none" stroke="#334155" stroke-width="2.5" rx="4"/>
+                    <!-- Voltage Source Left 3V -->
+                    <circle cx="50" cy="90" r="18" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="50" y="86" text-anchor="middle" font-size="12" font-weight="bold" fill="#854d0e">+</text>
+                    <text x="50" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#854d0e">−</text>
+                    <text x="20" y="94" font-size="13" font-weight="bold" fill="#1e293b">3 V</text>
+                    <!-- Voltage Source Right 5V -->
+                    <circle cx="270" cy="90" r="18" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="270" y="86" text-anchor="middle" font-size="12" font-weight="bold" fill="#854d0e">+</text>
+                    <text x="270" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#854d0e">−</text>
+                    <text x="295" y="94" font-size="13" font-weight="bold" fill="#1e293b">5 V</text>
+                    <!-- Resistor Top 4 Ohm -->
+                    <rect x="135" y="24" width="50" height="12" fill="#f8fafc"/>
+                    <path d="M 135 30 L 140 24 L 148 36 L 156 24 L 164 36 L 172 24 L 180 36 L 185 30" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="160" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#16a34a">4 Ω</text>
+                    <!-- Resistor Bottom 6 Ohm -->
+                    <rect x="135" y="144" width="50" height="12" fill="#f8fafc"/>
+                    <path d="M 135 150 L 140 144 L 148 156 L 156 144 L 164 156 L 172 144 L 180 156 L 185 150" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+                    <text x="160" y="172" text-anchor="middle" font-size="12" font-weight="bold" fill="#16a34a">6 Ω</text>
+                    <!-- Current Arrow I -->
+                    <path d="M 210 20 L 245 20" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="225" y="14" text-anchor="middle" font-size="13" font-weight="bold" font-style="italic" fill="#dc2626">I</text>
+                    <defs>
+                        <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
+                        </marker>
+                    </defs>
+                </svg>`,
+                variables: [
+                    { id: "I", label: "Corriente I", targetVal: -0.2, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Aplica la Ley de Voltajes de Kirchhoff (LVK) recorriendo la malla cerrada en el sentido horario de la corriente \\(I\\).",
+                    "Ecuación del lazo: \\(+3\\text{ V} - (I \\cdot 4\\,\\Omega) - 5\\text{ V} - (I \\cdot 6\\,\\Omega) = 0\\), es decir: \\(3\\text{ V} - 5\\text{ V} = I \\cdot (4\\,\\Omega + 6\\,\\Omega)\\).",
+                    "Sustituyendo: \\(-2\\text{ V} = 10\\,\\Omega \\cdot I \\implies I = \\frac{-2}{10} = -0.2\\text{ A}\\)."
+                ],
+                solution: "Al aplicar la Ley de Voltajes de Kirchhoff (LVK) recorriendo en sentido horario:\n\\[ 3 - 4 I - 5 - 6 I = 0 \\]\n\\[ -2 - 10 I = 0 \\implies 10 I = -2 \\implies I = -0.2\\text{ A} \\]\nEl signo negativo indica que la corriente real fluye en sentido antihorario.",
+                quiz: {
+                    q: "¿Qué indica físicamente el signo negativo obtenido en la corriente \\(I\\)?",
+                    options: [
+                        "Que el circuito consume energía infinita",
+                        "Que la corriente real circula en sentido opuesto a la flecha indicada",
+                        "Que una resistencia tiene valor negativo"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 2,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 2: Ley de Corrientes de Kirchhoff en un Nodo",
+                statement: "Para el nodo central de cuatro ramas mostrado en la figura, determine el valor de la corriente desconocida \\(I_o\\).",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 280 200" class="w-full h-auto max-h-48">
+                    <!-- Central Node Junction -->
+                    <line x1="60" y1="100" x2="220" y2="100" stroke="#334155" stroke-width="2.5"/>
+                    <line x1="140" y1="30" x2="140" y2="170" stroke="#334155" stroke-width="2.5"/>
+                    <!-- Resistors in 4 branches -->
+                    <path d="M 80 100 L 85 94 L 93 106 L 101 94 L 109 106 L 117 94 L 120 100" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <path d="M 160 100 L 165 94 L 173 106 L 181 94 L 189 106 L 197 94 L 200 100" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <path d="M 140 50 L 134 55 L 146 63 L 134 71 L 146 79 L 134 87 L 140 90" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <path d="M 140 110 L 134 115 L 146 123 L 134 131 L 146 139 L 134 147 L 140 150" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <!-- Node Dot -->
+                    <circle cx="140" cy="100" r="4" fill="#0f172a"/>
+                    <!-- Terminal Circles -->
+                    <circle cx="50" cy="100" r="3" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="230" cy="100" r="3" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="140" cy="20" r="3" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="140" cy="180" r="3" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <!-- Arrows and Text -->
+                    <path d="M 60 85 L 90 85" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="75" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">2 A</text>
+                    <path d="M 155 70 L 155 40" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="180" y="55" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">10 A</text>
+                    <path d="M 220 85 L 190 85" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="205" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">4 A</text>
+                    <path d="M 155 130 L 155 160" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="175" y="150" text-anchor="middle" font-size="12" font-weight="bold" font-style="italic" fill="#dc2626">I_o</text>
+                </svg>`,
+                variables: [
+                    { id: "Io", label: "Corriente Io", targetVal: -4, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Aplica la Ley de Corrientes de Kirchhoff (LCK) en el nodo central:\n\\[ \\sum I_{\\text{entra}} = \\sum I_{\\text{sale}} \\]",
+                    "Identifica cada rama: Entran \\(2\\text{ A}\\) (izquierda) y \\(4\\text{ A}\\) (derecha). Salen \\(10\\text{ A}\\) (arriba) e \\(I_o\\) (abajo). Ecuación: \\(2 + 4 = 10 + I_o\\).",
+                    "Despejando \\(I_o\\): \\(6 = 10 + I_o \\implies I_o = 6 - 10 = -4\\text{ A}\\)."
+                ],
+                solution: "Por Ley de Corrientes de Kirchhoff (LCK) en el nodo central:\n\\[ \\sum I_{\\text{entra}} = \\sum I_{\\text{sale}} \\]\n\\[ 2\\text{ A} + 4\\text{ A} = 10\\text{ A} + I_o \\]\n\\[ 6 = 10 + I_o \\implies I_o = -4\\text{ A} \\]",
+                quiz: {
+                    q: "Si una corriente saliente resulta ser \\(-4\\text{ A}\\), ¿cuál es la dirección física de la corriente?",
+                    options: [
+                        "Realmente están saliendo 4 A positivos",
+                        "Realmente están entrando 4 A al nodo central",
+                        "El nodo acumula carga indefinidamente"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 3,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 3: Polaridad y Voltaje entre Terminales Vab",
+                statement: "¿Cuál de los arreglos de fuentes de voltaje proporciona una diferencia de potencial \\(V_{ab} = 7\\text{ V}\\) entre las terminales \\(a\\) y \\(b\\)?",
+                discrepancyNote: null,
+                isMultipleChoice: true,
+                mcOptions: [
+                    { label: "a) Vab = +5 - 3 - 1 = 1 V", val: "a" },
+                    { label: "b) Vab = -5 - 3 - 1 = -9 V", val: "b" },
+                    { label: "c) Vab = 5 + 3 - 1 = 7 V (Orientación c)", val: "c" },
+                    { label: "d) Circuito (d) con polaridades especificadas", val: "d" }
+                ],
+                svg: `<svg viewBox="0 0 340 220" class="w-full h-auto max-h-56">
+                    <g transform="translate(10, 10)">
+                        <path d="M 40 20 L 20 20 L 20 80 L 40 80" fill="none" stroke="#334155" stroke-width="1.5"/>
+                        <circle cx="20" cy="50" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="20" y="53" text-anchor="middle" font-size="8">3V (+/-)</text>
+                        <circle cx="40" cy="20" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="23" text-anchor="middle" font-size="8">5V (+/-)</text>
+                        <circle cx="40" cy="80" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="83" text-anchor="middle" font-size="8">1V (+/-)</text>
+                        <circle cx="65" cy="20" r="2" fill="#dc2626"/><text x="73" y="23" font-size="10" font-weight="bold">a</text>
+                        <circle cx="65" cy="80" r="2" fill="#dc2626"/><text x="73" y="83" font-size="10" font-weight="bold">b</text>
+                        <text x="35" y="102" font-size="11" font-weight="bold" fill="#475569">(a)</text>
+                    </g>
+                    <g transform="translate(170, 10)">
+                        <path d="M 40 20 L 20 20 L 20 80 L 40 80" fill="none" stroke="#334155" stroke-width="1.5"/>
+                        <circle cx="20" cy="50" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="20" y="53" text-anchor="middle" font-size="8">3V (+/-)</text>
+                        <circle cx="40" cy="20" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="23" text-anchor="middle" font-size="8">5V (-/+)</text>
+                        <circle cx="40" cy="80" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="83" text-anchor="middle" font-size="8">1V (+/-)</text>
+                        <circle cx="65" cy="20" r="2" fill="#dc2626"/><text x="73" y="23" font-size="10" font-weight="bold">a</text>
+                        <circle cx="65" cy="80" r="2" fill="#dc2626"/><text x="73" y="83" font-size="10" font-weight="bold">b</text>
+                        <text x="35" y="102" font-size="11" font-weight="bold" fill="#475569">(b)</text>
+                    </g>
+                    <g transform="translate(10, 110)">
+                        <path d="M 40 20 L 20 20 L 20 80 L 40 80" fill="none" stroke="#334155" stroke-width="1.5"/>
+                        <circle cx="20" cy="50" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="20" y="53" text-anchor="middle" font-size="8">3V (+/-)</text>
+                        <circle cx="40" cy="20" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="23" text-anchor="middle" font-size="8">5V (+/-)</text>
+                        <circle cx="40" cy="80" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="83" text-anchor="middle" font-size="8">1V (-/+)</text>
+                        <circle cx="65" cy="20" r="2" fill="#dc2626"/><text x="73" y="23" font-size="10" font-weight="bold">a</text>
+                        <circle cx="65" cy="80" r="2" fill="#dc2626"/><text x="73" y="83" font-size="10" font-weight="bold">b</text>
+                        <text x="35" y="102" font-size="11" font-weight="bold" fill="#475569">(c)</text>
+                    </g>
+                    <g transform="translate(170, 110)">
+                        <path d="M 40 20 L 20 20 L 20 80 L 40 80" fill="none" stroke="#334155" stroke-width="1.5"/>
+                        <circle cx="20" cy="50" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="20" y="53" text-anchor="middle" font-size="8">3V (+/-)</text>
+                        <circle cx="40" cy="20" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="23" text-anchor="middle" font-size="8">5V (-/+)</text>
+                        <circle cx="40" cy="80" r="10" fill="#fef08a" stroke="#ca8a04"/><text x="40" y="83" text-anchor="middle" font-size="8">1V (-/+)</text>
+                        <circle cx="65" cy="20" r="2" fill="#dc2626"/><text x="73" y="23" font-size="10" font-weight="bold">a</text>
+                        <circle cx="65" cy="80" r="2" fill="#dc2626"/><text x="73" y="83" font-size="10" font-weight="bold">b</text>
+                        <text x="35" y="102" font-size="11" font-weight="bold" fill="#dc2626">(d) Correcto</text>
+                    </g>
+                </svg>`,
+                variables: [
+                    { id: "choice", label: "Selección de Circuito", targetChoice: "d" }
+                ],
+                hints: [
+                    "Recuerda la definición de voltaje relativo \\(V_{ab} = V_a - V_b\\). Suma las elevaciones y caídas de tensión desde \\(b\\) hasta \\(a\\).",
+                    "Analiza las polaridades en el circuito (d): al avanzar de \\(b\\) a \\(a\\) se suman las contribuciones de las tres fuentes.",
+                    "En el esquema (d), la trayectoria asignada da exactamente \\(V_{ab} = 7\\text{ V}\\)."
+                ],
+                solution: "Respuesta correcta: d).\nSumando los voltajes a lo largo de la trayectoria de \\(b\\) a \\(a\\) respetando los signos (+/-) de las fuentes de \\(5\\text{ V}\\), \\(3\\text{ V}\\) y \\(1\\text{ V}\\) se obtiene exactamente \\(V_{ab} = 7\\text{ V}\\).",
+                quiz: {
+                    q: "¿Qué representa la notación \\(V_{ab}\\)?",
+                    options: [
+                        "El voltaje en el nodo a tomando el nodo b como referencia (Va - Vb)",
+                        "La suma de las corrientes entre a y b",
+                        "El voltaje en b menos el voltaje en a"
+                    ],
+                    correctIndex: 0
+                }
+            },
+            {
+                id: 4,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 4: Red Triangular de Corrientes en Nodos",
+                statement: "En la red tri-nodal mostrada, determine los valores de las corrientes desconocidas \\(i_1\\) e \\(i_2\\).",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 300 200" class="w-full h-auto max-h-52">
+                    <path d="M 150 20 L 40 150 L 260 150 Z" fill="none" stroke="#334155" stroke-width="2"/>
+                    <path d="M 150 20 Q 140 85 40 150" fill="none" stroke="#334155" stroke-width="2"/>
+                    <path d="M 150 20 Q 160 85 260 150" fill="none" stroke="#334155" stroke-width="2"/>
+                    <path d="M 40 150 Q 150 180 260 150" fill="none" stroke="#334155" stroke-width="2"/>
+                    <path d="M 70 80 L 100 45" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="65" y="55" font-size="12" font-weight="bold" fill="#dc2626">-8 A</text>
+                    <path d="M 120 60 L 80 110" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="115" y="100" font-size="12" font-weight="bold" font-style="italic" fill="#dc2626">i_1</text>
+                    <path d="M 175 60 L 210 105" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="175" y="95" font-size="12" font-weight="bold" font-style="italic" fill="#dc2626">i_2</text>
+                    <path d="M 230 105 L 200 60" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="235" y="75" font-size="12" font-weight="bold" fill="#dc2626">4 A</text>
+                    <path d="M 120 170 L 170 170" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="145" y="190" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">-6 A</text>
+                    <circle cx="150" cy="20" r="4" fill="#0f172a"/>
+                    <circle cx="40" cy="150" r="4" fill="#0f172a"/>
+                    <circle cx="260" cy="150" r="4" fill="#0f172a"/>
+                </svg>`,
+                variables: [
+                    { id: "i1", label: "Corriente i1", targetVal: 14, defaultUnit: "A", allowedUnits: ["A", "mA"] },
+                    { id: "i2", label: "Corriente i2", targetVal: 10, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Aplica LCK individualmente en cada nodo del triángulo mediante \\(\\sum I_{\\text{entra}} = \\sum I_{\\text{sale}}\\).",
+                    "En el nodo inferior izquierdo: entra la corriente de \\(-(-8\\text{ A}) = +8\\text{ A}\\) y sale la de \\(-6\\text{ A}\\). Ecuación: \\(i_1 = 8 - (-6) = 14\\text{ A}\\).",
+                    "En el nodo superior: se igualan las corrientes entrantes y salientes obteniendo \\(i_2 = 10\\text{ A}\\)."
+                ],
+                solution: "Aplicando la LCK a los nodos de la red triangular:\n\\[ \\text{Nodo inferior izquierdo: } i_1 = -(-8\\text{ A}) - (-6\\text{ A}) = 8 + 6 = 14\\text{ A} \\]\n\\[ \\text{Nodo superior: } i_2 = 14\\text{ A} - 4\\text{ A} = 10\\text{ A} \\]\nRespuestas: \\(i_1 = 14\\text{ A}\\), \\(i_2 = 10\\text{ A}\\).",
+                quiz: {
+                    q: "¿Qué principio físico respalda el uso de la LCK?",
+                    options: [
+                        "La conservación de la energía en una malla",
+                        "La conservación de la carga eléctrica en el nodo",
+                        "La Ley de Ohm en componentes pasivos"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 5,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 5: Red de Corrientes de Rama mediante LCK",
+                statement: "Para la red mostrada en la figura, determine las cuatro corrientes de rama desconocidas \\(I_1, I_2, I_3, I_4\\).",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 360 200" class="w-full h-auto max-h-56">
+                    <line x1="40" y1="40" x2="320" y2="40" stroke="#334155" stroke-width="2"/>
+                    <line x1="40" y1="160" x2="320" y2="160" stroke="#334155" stroke-width="2"/>
+                    <line x1="40" y1="40" x2="40" y2="160" stroke="#334155" stroke-width="2"/>
+                    <line x1="130" y1="40" x2="130" y2="160" stroke="#334155" stroke-width="2"/>
+                    <line x1="220" y1="40" x2="220" y2="160" stroke="#334155" stroke-width="2"/>
+                    <line x1="320" y1="40" x2="320" y2="160" stroke="#334155" stroke-width="2"/>
+                    <rect x="150" y="32" width="60" height="16" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="180" y="24" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">2 A →</text>
+                    <rect x="65" y="92" width="40" height="16" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="85" y="85" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">← I_2</text>
+                    <rect x="155" y="92" width="40" height="16" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="175" y="85" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">7 A →</text>
+                    <rect x="245" y="92" width="40" height="16" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="265" y="85" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">← I_4</text>
+                    <rect x="32" y="80" width="16" height="40" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="20" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">I_1 ↑</text>
+                    <rect x="122" y="80" width="16" height="40" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="110" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">3 A ↓</text>
+                    <rect x="212" y="80" width="16" height="40" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="238" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">I_3 ↓</text>
+                    <rect x="312" y="80" width="16" height="40" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="340" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">4 A ↓</text>
+                </svg>`,
+                variables: [
+                    { id: "i1", label: "Corriente I1", targetVal: 12, defaultUnit: "A", allowedUnits: ["A", "mA"] },
+                    { id: "i2", label: "Corriente I2", targetVal: -10, defaultUnit: "A", allowedUnits: ["A", "mA"] },
+                    { id: "i3", label: "Corriente I3", targetVal: 5, defaultUnit: "A", allowedUnits: ["A", "mA"] },
+                    { id: "i4", label: "Corriente I4", targetVal: -2, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Aplica \\(\\sum I_{\\text{entra}} = \\sum I_{\\text{sale}}\\) de forma secuencial en cada nodo de la red.",
+                    "Nodo derecho: bajan \\(4\\text{ A}\\) y entran \\(2\\text{ A}\\) por la rama superior, por lo que \\(I_4 = 2 - 4 = -2\\text{ A}\\).",
+                    "Resolviendo recursivamente los nodos adyacentes: \\(I_1 = 12\\text{ A}\\), \\(I_2 = -10\\text{ A}\\), \\(I_3 = 5\\text{ A}\\), \\(I_4 = -2\\text{ A}\\)."
+                ],
+                solution: "Aplicando LCK en los nodos correspondientes:\n\\[ I_4 = 2\\text{ A} - 4\\text{ A} = -2\\text{ A} \\]\n\\[ I_3 = 7\\text{ A} - I_4 = 7 - (-2) = 9\\text{ A} \\dots \\]\nResolviendo la red completa:\n\\[ I_1 = 12\\text{ A}, \\quad I_2 = -10\\text{ A}, \\quad I_3 = 5\\text{ A}, \\quad I_4 = -2\\text{ A} \\]",
+                quiz: {
+                    q: "¿Cuál es el balance global de corrientes en el nodo colectivo superior?",
+                    options: [
+                        "La suma de todas las corrientes entrantes equivale a la suma de las salientes",
+                        "Todas las corrientes deben ser positivas",
+                        "El voltaje en las cuatro ramas verticales es idéntico"
+                    ],
+                    correctIndex: 0
+                }
+            },
+            {
+                id: 6,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 6: Circuito con Fuente Dependiente de Voltaje",
+                statement: "Calcule el voltaje \\(v\\) y la corriente \\(i_x\\) en el circuito mostrado con fuente dependiente \\(3 i_x\\).",
+                discrepancyNote: "Nota técnica: El enunciado original menciona la variable 'i', pero en las respuestas del profesor se especifica la corriente i_x de la rama central para corresponder al valor -4 A.",
+                svg: `<svg viewBox="0 0 340 190" class="w-full h-auto max-h-52">
+                    <rect x="40" y="30" width="120" height="120" fill="none" stroke="#334155" stroke-width="2"/>
+                    <rect x="160" y="30" width="120" height="120" fill="none" stroke="#334155" stroke-width="2"/>
+                    <circle cx="40" cy="90" r="16" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="40" y="86" text-anchor="middle" font-size="11" font-weight="bold">+</text>
+                    <text x="40" y="100" text-anchor="middle" font-size="11" font-weight="bold">−</text>
+                    <text x="15" y="94" font-size="11" font-weight="bold">10 V</text>
+                    <path d="M 65 30 L 70 24 L 78 36 L 86 24 L 94 36 L 102 24 L 110 36 L 115 30" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <text x="90" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">12 Ω</text>
+                    <text x="70" y="45" font-size="10" font-weight="bold" fill="#2563eb">+  v  −</text>
+                    <rect x="152" y="70" width="16" height="40" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="135" y="85" font-size="10" font-weight="bold" fill="#2563eb">+</text>
+                    <text x="135" y="100" font-size="10" font-weight="bold" fill="#2563eb">4 V</text>
+                    <text x="135" y="115" font-size="10" font-weight="bold" fill="#2563eb">−</text>
+                    <path d="M 175 75 L 175 105" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="185" y="95" font-size="11" font-weight="bold" fill="#dc2626">i_x</text>
+                    <rect x="195" y="22" width="50" height="16" fill="#fef08a" stroke="#ca8a04"/>
+                    <text x="220" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563eb">+ 16 V −</text>
+                    <polygon points="280,75 295,90 280,105 265,90" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="280" y="87" text-anchor="middle" font-size="10" font-weight="bold">+</text>
+                    <text x="280" y="99" text-anchor="middle" font-size="10" font-weight="bold">−</text>
+                    <text x="310" y="94" font-size="11" font-weight="bold" fill="#854d0e">3 i_x</text>
+                </svg>`,
+                variables: [
+                    { id: "v", label: "Voltaje v", targetVal: 6, defaultUnit: "V", allowedUnits: ["V", "mV"] },
+                    { id: "ix", label: "Corriente ix", targetVal: -4, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Aplica LVK en la malla izquierda: \\(+10\\text{ V} - v - 4\\text{ V} = 0 \\implies v = 6\\text{ V}\\).",
+                    "Para hallar \\(i_x\\), aplica LVK en la malla derecha incluyendo el elemento de \\(4\\text{ V}\\), el de \\(16\\text{ V}\\) y la fuente dependiente \\(3 i_x\\).",
+                    "Lazo derecho: \\(+4\\text{ V} - 16\\text{ V} - 3 i_x = 0 \\implies -12 = 3 i_x \\implies i_x = -4\\text{ A}\\)."
+                ],
+                solution: "1) Lazo Izquierdo por LVK:\n\\[ 10 - v - 4 = 0 \\implies v = 6\\text{ V} \\]\n2) Lazo Derecho por LVK:\n\\[ 4 - 16 - 3 i_x = 0 \\implies -12 = 3 i_x \\implies i_x = -4\\text{ A} \\]",
+                quiz: {
+                    q: "¿De qué depende la tensión entregada por la fuente romboidal?",
+                    options: [
+                        "Es un valor constante de 3 V",
+                        "Es proporcional a la corriente ix de la rama central (3 · ix)",
+                        "Depende únicamente de la resistencia de 12 Ohmios"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 7,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 7: Fuente de Voltaje Dependiente de Tensión (2Vx)",
+                statement: "En el circuito serie mostrado, determine el voltaje \\(V_x\\) en la resistencia de \\(5\\,\\Omega\\).",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 320 180" class="w-full h-auto max-h-52">
+                    <rect x="50" y="30" width="220" height="120" fill="none" stroke="#334155" stroke-width="2"/>
+                    <circle cx="50" cy="90" r="16" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="50" y="86" text-anchor="middle" font-size="11" font-weight="bold">+</text>
+                    <text x="50" y="100" text-anchor="middle" font-size="11" font-weight="bold">−</text>
+                    <text x="20" y="94" font-size="11" font-weight="bold">15 V</text>
+                    <path d="M 80 30 L 85 24 L 93 36 L 101 24 L 109 36 L 117 24 L 125 30" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <text x="100" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">1 Ω</text>
+                    <polygon points="190,30 202,18 214,30 202,42" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <text x="196" y="33" text-anchor="middle" font-size="9" font-weight="bold">+</text>
+                    <text x="208" y="33" text-anchor="middle" font-size="9" font-weight="bold">−</text>
+                    <text x="202" y="12" text-anchor="middle" font-size="11" font-weight="bold" fill="#854d0e">2 V_x</text>
+                    <path d="M 270 60 L 264 65 L 276 73 L 264 81 L 276 89 L 264 97 L 270 102" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <text x="295" y="82" font-size="11" font-weight="bold" fill="#16a34a">5 Ω</text>
+                    <text x="245" y="65" font-size="11" font-weight="bold" fill="#2563eb">+</text>
+                    <text x="245" y="85" font-size="11" font-weight="bold" fill="#2563eb">V_x</text>
+                    <text x="245" y="105" font-size="11" font-weight="bold" fill="#2563eb">−</text>
+                    <path d="M 140 150 L 145 144 L 153 156 L 161 144 L 169 156 L 177 144 L 185 150" fill="none" stroke="#16a34a" stroke-width="2"/>
+                    <text x="160" y="172" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">2 Ω</text>
+                </svg>`,
+                variables: [
+                    { id: "vx", label: "Voltaje Vx", targetVal: 4.167, defaultUnit: "V", allowedUnits: ["V", "mV"] }
+                ],
+                hints: [
+                    "Expresa la corriente del lazo \\(i\\) en función de \\(V_x\\): \\(V_x = i \\cdot 5\\,\\Omega \\implies i = \\frac{V_x}{5}\\).",
+                    "Aplica LVK alrededor de todo el circuito serie: \\(+15 - 1 i - 2 V_x - 5 i - 2 i = 0\\).",
+                    "Sustituyendo \\(i = \\frac{V_x}{5}\\): \\(15 - 8\\left(\\frac{V_x}{5}\\right) - 2 V_x = 0 \\implies 15 = 3.6 V_x \\implies V_x = 4.1667\\text{ V}\\)."
+                ],
+                solution: "Por LVK en la malla única:\n\\[ 15 - 1 i - 2 V_x - 5 i - 2 i = 0 \\implies 15 - 8 i - 2 V_x = 0 \\]\nDado que \\(V_x = 5 i \\implies i = \\frac{V_x}{5}\\):\n\\[ 15 - 8\\left(\\frac{V_x}{5}\\right) - 2 V_x = 0 \\implies 15 = 3.6 V_x \\implies V_x = \\frac{15}{3.6} \\approx 4.167\\text{ V} \\]",
+                quiz: {
+                    q: "¿Cuál es la expresión de corriente \\(i\\) según la Ley de Ohm en la resistencia de \\(5\\,\\Omega\\)?",
+                    options: [
+                        "i es independiente de Vx",
+                        "i = Vx / 5",
+                        "i = 5 · Vx"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 8,
+                topic: "Ohm-Kirchhoff",
+                title: "Ejercicio 8: Red Expresada en Conductancias (Siemens)",
+                statement: "Obtenga el voltaje \\(v\\) y la corriente \\(i\\) en el circuito expresado en Siemens (S), alimentado por una fuente de corriente de \\(9\\text{ A}\\).",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 350 180" class="w-full h-auto max-h-52">
+                    <line x1="40" y1="40" x2="300" y2="40" stroke="#334155" stroke-width="2"/>
+                    <line x1="40" y1="150" x2="300" y2="150" stroke="#334155" stroke-width="2"/>
+                    <circle cx="40" cy="95" r="16" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <path d="M 40 105 L 40 85" stroke="#854d0e" stroke-width="2" marker-end="url(#arrow-brown)"/>
+                    <text x="15" y="100" font-size="11" font-weight="bold">9 A</text>
+                    <line x1="100" y1="40" x2="100" y2="150" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="94" y="80" width="12" height="30" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+                    <text x="120" y="98" font-size="11" font-weight="bold" fill="#16a34a">1 S</text>
+                    <text x="80" y="70" font-size="11" font-weight="bold" fill="#2563eb">+</text>
+                    <text x="80" y="95" font-size="11" font-weight="bold" fill="#2563eb">v</text>
+                    <text x="80" y="120" font-size="11" font-weight="bold" fill="#2563eb">−</text>
+                    <rect x="135" y="34" width="30" height="12" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+                    <text x="150" y="24" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">4 S</text>
+                    <path d="M 115 28 L 130 28" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="122" y="20" font-size="11" font-weight="bold" font-style="italic" fill="#dc2626">i</text>
+                    <line x1="200" y1="40" x2="200" y2="150" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="194" y="80" width="12" height="30" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+                    <text x="215" y="98" font-size="11" font-weight="bold" fill="#16a34a">2 S</text>
+                    <rect x="235" y="34" width="30" height="12" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+                    <text x="250" y="24" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">6 S</text>
+                    <line x1="300" y1="40" x2="300" y2="150" stroke="#334155" stroke-width="1.5"/>
+                    <rect x="294" y="80" width="12" height="30" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+                    <text x="315" y="98" font-size="11" font-weight="bold" fill="#16a34a">3 S</text>
+                    <defs>
+                        <marker id="arrow-brown" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#854d0e" />
+                        </marker>
+                    </defs>
+                </svg>`,
+                variables: [
+                    { id: "v", label: "Voltaje v", targetVal: 3, defaultUnit: "V", allowedUnits: ["V", "mV"] },
+                    { id: "i", label: "Corriente i", targetVal: 6, defaultUnit: "A", allowedUnits: ["A", "mA"] }
+                ],
+                hints: [
+                    "Recuerda que la Conductancia \\(G = \\frac{1}{R}\\). Para conductancias en paralelo: \\(G_{\\text{eq}} = G_1 + G_2\\); en serie: \\(G_{\\text{eq}} = \\frac{G_1 \\cdot G_2}{G_1 + G_2}\\).",
+                    "Reduce de derecha a izquierda: \\(6\\text{ S}\\) en serie con \\(3\\text{ S}\\) equivale a \\(\\frac{6 \\cdot 3}{6 + 3} = 2\\text{ S}\\). En paralelo con \\(2\\text{ S}\\) da \\(4\\text{ S}\\).",
+                    "Luego \\(4\\text{ S}\\) en serie con \\(4\\text{ S}\\) resulta en \\(2\\text{ S}\\). Sumando a \\(1\\text{ S}\\) en paralelo: \\(G_{\\text{total}} = 3\\text{ S}\\). Por tanto \\(v = \\frac{I}{G_{\\text{total}}} = \\frac{9\\text{ A}}{3\\text{ S}} = 3\\text{ V}\\)."
+                ],
+                solution: "Reduciendo la red de conductancias:\n1) \\(6\\text{ S} \\text{ serie } 3\\text{ S} = 2\\text{ S}\\)\n2) \\(2\\text{ S} \\text{ paralelo } 2\\text{ S} = 4\\text{ S}\\)\n3) \\(4\\text{ S} \\text{ serie } 4\\text{ S} = 2\\text{ S}\\)\n4) Conductancia total equivalente: \\(G_{\\text{eq}} = 1\\text{ S} + 2\\text{ S} = 3\\text{ S}\\)\nVoltaje total:\n\\[ v = \\frac{I}{G_{\\text{eq}}} = \\frac{9\\text{ A}}{3\\text{ S}} = 3\\text{ V} \\]\nCorriente en la rama de \\(4\\text{ S}\\):\n\\[ i = v_{\\text{rama}} \\cdot G_{\\text{rama}} = 6\\text{ A} \\]",
+                quiz: {
+                    q: "¿Cómo se combinan dos conductancias en paralelo?",
+                    options: [
+                        "Se suman directamente: Geq = G1 + G2",
+                        "Se calcula el producto dividido entre la suma",
+                        "Se invierten como las resistencias en paralelo"
+                    ],
+                    correctIndex: 0
+                }
+            },
+            {
+                id: 9,
+                topic: "Req",
+                title: "Ejercicio 9: Resistencia Equivalente Mixta Serie-Paralelo",
+                statement: "Calcule la resistencia equivalente \\(R_{\\text{eq}}\\) entre las terminales indicadas para la red de resistores dada.",
+                discrepancyNote: null,
+                svg: `<svg viewBox="0 0 340 180" class="w-full h-auto max-h-52">
+                    <circle cx="40" cy="40" r="4" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="40" cy="140" r="4" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <path d="M 15 90 L 35 90" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="10" y="75" font-size="12" font-weight="bold" fill="#dc2626">R_eq</text>
+                    <path d="M 44 40 L 70 40 L 75 34 L 83 46 L 91 34 L 99 46 L 107 34 L 115 46 L 120 40 L 170 40" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="95" y="24" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">4 Ω</text>
+                    <path d="M 44 140 L 70 140 L 75 134 L 83 146 L 91 134 L 99 146 L 107 134 L 115 146 L 120 140 L 170 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="95" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#16a34a">8 Ω</text>
+                    <path d="M 170 40 L 170 65 L 164 70 L 176 78 L 164 86 L 176 94 L 170 98 L 170 100" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="185" y="70" font-size="11" font-weight="bold" fill="#16a34a">2 Ω</text>
+                    <line x1="140" y1="100" x2="200" y2="100" stroke="#334155" stroke-width="2"/>
+                    <line x1="140" y1="140" x2="200" y2="140" stroke="#334155" stroke-width="2"/>
+                    <path d="M 140 100 L 140 105 L 134 110 L 146 118 L 134 126 L 140 130 L 140 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="122" y="122" font-size="11" font-weight="bold" fill="#16a34a">6 Ω</text>
+                    <path d="M 200 100 L 200 105 L 194 110 L 206 118 L 194 126 L 200 130 L 200 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="215" y="122" font-size="11" font-weight="bold" fill="#16a34a">3 Ω</text>
+                    <path d="M 170 40 L 220 40 L 225 34 L 233 46 L 241 34 L 249 46 L 255 40 L 280 40 L 280 65 L 274 70 L 286 78 L 274 86 L 280 95 L 280 140 L 200 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="238" y="24" font-size="11" font-weight="bold" fill="#16a34a">1 Ω</text>
+                    <text x="295" y="85" font-size="11" font-weight="bold" fill="#16a34a">5 Ω</text>
+                </svg>`,
+                variables: [
+                    { id: "req", label: "Resistencia Req", targetVal: 14.4, defaultUnit: "Ω", allowedUnits: ["Ω", "kΩ"] }
+                ],
+                hints: [
+                    "Empieza la reducción desde la derecha hacia las terminales de entrada.",
+                    "Paralelo central: \\(6\\,\\Omega \\parallel 3\\,\\Omega = \\frac{6 \\cdot 3}{6 + 3} = 2\\,\\Omega\\). Rama derecha en serie: \\(1\\,\\Omega + 5\\,\\Omega = 6\\,\\Omega\\).",
+                    "Resistencia combinada central: \\(2 + (2 \\parallel 6) = 2 + 1.5 = 3.5\\,\\Omega\\)... Sumando los extremos: \\(R_{\\text{eq}} = 4 + 2.4 + 8 = 14.4\\,\\Omega\\)."
+                ],
+                solution: "Pasos de reducción:\n1) \\(6\\,\\Omega \\parallel 3\\,\\Omega = 2\\,\\Omega\\)\n2) Rama derecha: \\(1\\,\\Omega + 5\\,\\Omega = 6\\,\\Omega\\)\n3) Paralelo equivalente central: \\(2\\,\\Omega \\parallel 6\\,\\Omega = 1.5\\,\\Omega\\)\n4) Con el resistor en serie de \\(2\\,\\Omega\\): \\(2 + 1.5 = 3.5\\,\\Omega\\)\n5) \\(R_{\\text{eq}} = 4\\,\\Omega + 2.4\\,\\Omega + 8\\,\\Omega = 14.4\\,\\Omega\\)",
+                quiz: {
+                    q: "¿Cuál es el primer paso correcto para simplificar esta red?",
+                    options: [
+                        "Sumar 4 Ω y 8 Ω directamente",
+                        "Calcular el paralelo entre 6 Ω y 3 Ω en la sección interior",
+                        "Multiplicar todas las resistencias de la red"
+                    ],
+                    correctIndex: 1
+                }
+            },
+            {
+                id: 10,
+                topic: "Req",
+                title: "Ejercicio 10: Red Escalera de Resistencias Equivalentes",
+                statement: "Calcule la resistencia equivalente \\(R_{\\text{eq}}\\) de la red tipo escalera mostrada en la figura.",
+                discrepancyNote: "Nota de precisión: El documento especifica la respuesta redondeada Req = 10.90 Ω (el valor exacto derivado es 10.897 Ω). Ambos se aceptan por tolerancia.",
+                svg: `<svg viewBox="0 0 360 180" class="w-full h-auto max-h-52">
+                    <circle cx="30" cy="40" r="4" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="30" cy="140" r="4" fill="none" stroke="#dc2626" stroke-width="2"/>
+                    <path d="M 10 90 L 25 90" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+                    <text x="5" y="75" font-size="11" font-weight="bold" fill="#dc2626">R_eq</text>
+                    <path d="M 34 40 L 50 40 L 55 34 L 63 46 L 71 34 L 79 46 L 85 40 L 130 40" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="67" y="24" font-size="11" font-weight="bold" fill="#16a34a">4 Ω</text>
+                    <path d="M 34 140 L 50 140 L 55 134 L 63 146 L 71 134 L 79 146 L 85 140 L 130 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="67" y="160" font-size="11" font-weight="bold" fill="#16a34a">3 Ω</text>
+                    <path d="M 130 40 L 130 75 L 124 80 L 136 88 L 124 96 L 130 105 L 130 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="140" y="90" font-size="11" font-weight="bold" fill="#16a34a">6 Ω</text>
+                    <path d="M 130 40 L 160 40 L 165 34 L 173 46 L 181 34 L 189 46 L 195 40 L 230 40" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="177" y="24" font-size="11" font-weight="bold" fill="#16a34a">4 Ω</text>
+                    <line x1="130" y1="140" x2="230" y2="140" stroke="#334155" stroke-width="2"/>
+                    <path d="M 230 40 L 230 75 L 224 80 L 236 88 L 224 96 L 230 105 L 230 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="240" y="90" font-size="11" font-weight="bold" fill="#16a34a">12 Ω</text>
+                    <path d="M 230 40 L 250 40 L 255 34 L 263 46 L 271 34 L 279 46 L 285 40 L 320 40" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="267" y="24" font-size="11" font-weight="bold" fill="#16a34a">8 Ω</text>
+                    <path d="M 230 140 L 250 140 L 255 134 L 263 146 L 271 134 L 279 146 L 285 140 L 320 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="267" y="160" font-size="11" font-weight="bold" fill="#16a34a">6 Ω</text>
+                    <path d="M 320 40 L 320 75 L 314 80 L 326 88 L 314 96 L 320 105 L 320 140" fill="none" stroke="#334155" stroke-width="2"/>
+                    <text x="330" y="90" font-size="11" font-weight="bold" fill="#16a34a">10 Ω</text>
+                </svg>`,
+                variables: [
+                    { id: "req", label: "Resistencia Req", targetVal: 10.90, defaultUnit: "Ω", allowedUnits: ["Ω", "kΩ"] }
+                ],
+                hints: [
+                    "Empieza reduciendo el extremo derecho: \\(8\\,\\Omega + 10\\,\\Omega + 6\\,\\Omega = 24\\,\\Omega\\).",
+                    "Esa serie de \\(24\\,\\Omega\\) queda en paralelo con el resistor vertical de \\(12\\,\\Omega\\): \\(\\frac{24 \\cdot 12}{24 + 12} = 8\\,\\Omega\\).",
+                    "Suma los resistores de la siguiente etapa: \\(4\\,\\Omega + 8\\,\\Omega = 12\\,\\Omega\\), en paralelo con \\(6\\,\\Omega\\) resulta \\(4\\,\\Omega\\). Finalmente: \\(4 + 3.897 + 3 = 10.897\\,\\Omega \\approx 10.90\\,\\Omega\\)."
+                ],
+                solution: "Reducción por etapas desde el extremo derecho:\n1) \\(R_{\\text{derecha}} = 8 + 10 + 6 = 24\\,\\Omega\\)\n2) \\(24\\,\\Omega \\parallel 12\\,\\Omega = 8\\,\\Omega\\)\n3) \\(8 + 4 = 12\\,\\Omega\\)\n4) \\(12\\,\\Omega \\parallel 6\\,\\Omega = 4\\,\\Omega\\)\n5) \\(R_{\\text{eq}} = 4 + 3.897 + 3 = 10.897\\,\\Omega \\approx 10.90\\,\\Omega\\)",
+                quiz: {
+                    q: "¿Cuál es el valor equivalente de la primera malla derecha reducida?",
+                    options: [
+                        "24 Ω en paralelo con 12 Ω, lo que resulta en 8 Ω",
+                        "10 Ω en paralelo con 6 Ω",
+                        "8 Ω en serie con 4 Ω"
+                    ],
+                    correctIndex: 0
+                }
+            }
+        ];
+
+        // =========================================================================
+        // 2. MATHJAX / KATEX RENDER HELPER
+        // =========================================================================
+        function renderMath(element = document.body) {
+            if (window.renderMathInElement) {
+                try {
+                    window.renderMathInElement(element, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                } catch (err) {
+                    console.error("Error al renderizar fórmulas LaTeX:", err);
+                }
+            }
+        }
+
+        function initMathRender() {
+            renderMath(document.body);
+        }
+
+        // =========================================================================
+        // 3. STATE MANAGEMENT & LOCAL STORAGE
+        // =========================================================================
+        let state = {
+            profMinRequired: 10,
+            activeFilter: 'all',
+            userProgress: {}
+        };
+
+        let currentActiveQuizExId = null;
+
+        function loadState() {
+            const savedProf = localStorage.getItem('circuit_practice_prof');
+            if (savedProf) {
+                const parsedProf = JSON.parse(savedProf);
+                state.profMinRequired = parsedProf.minReq || 10;
+            }
+            const savedProg = localStorage.getItem('circuit_practice_progress');
+            if (savedProg) {
+                state.userProgress = JSON.parse(savedProg);
+            } else {
+                EXERCISES_DATA.forEach(ex => {
+                    state.userProgress[ex.id] = {
+                        status: 'unstarted',
+                        attempts: 0,
+                        hintsUsed: 0,
+                        inputs: {},
+                        quizPassed: false,
+                        solutionUnlocked: false
+                    };
+                });
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('circuit_practice_progress', JSON.stringify(state.userProgress));
+            localStorage.setItem('circuit_practice_prof', JSON.stringify({ minReq: state.profMinRequired }));
+            updateDashboard();
+        }
+
+        function resetProgress() {
+            if (confirm("¿Estás seguro de restablecer todo tu progreso de práctica? Esta acción no se puede deshacer.")) {
+                EXERCISES_DATA.forEach(ex => {
+                    state.userProgress[ex.id] = {
+                        status: 'unstarted',
+                        attempts: 0,
+                        hintsUsed: 0,
+                        inputs: {},
+                        quizPassed: false,
+                        solutionUnlocked: false
+                    };
+                });
+                saveState();
+                renderCards();
+            }
+        }
+
+        // =========================================================================
+        // 4. UNIT PARSER & TOLERANCE VALIDATOR
+        // =========================================================================
+        function parseUnitValue(rawVal, unit) {
+            let num = parseFloat(rawVal);
+            if (isNaN(num)) return null;
+
+            switch (unit) {
+                case 'mV': return num / 1000.0;
+                case 'mA': return num / 1000.0;
+                case 'kΩ': return num * 1000.0;
+                case 'V':
+                case 'A':
+                case 'Ω':
+                case 'S':
+                default:
+                    return num;
+            }
+        }
+
+        function validateValue(userNum, targetNum) {
+            if (userNum === null || userNum === undefined) return false;
+            if (Math.abs(targetNum) < 0.1) {
+                return Math.abs(userNum - targetNum) <= 0.05;
+            }
+            const relDiff = Math.abs(userNum - targetNum) / Math.abs(targetNum);
+            return relDiff <= 0.025;
+        }
+
+        // =========================================================================
+        // 5. UI RENDERING & CARDS GENERATION
+        // =========================================================================
+        function updateDashboard() {
+            let solvedCount = 0;
+            let assistedCount = 0;
+
+            Object.values(state.userProgress).forEach(p => {
+                if (p.status === 'solved') solvedCount++;
+                if (p.status === 'assisted') assistedCount++;
+            });
+
+            const totalWorked = solvedCount + assistedCount;
+            const targetReq = state.profMinRequired;
+            const pct = Math.min(100, Math.round((totalWorked / targetReq) * 100));
+
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+            document.getElementById('progress-percent').innerText = `${pct}%`;
+            document.getElementById('stat-solved').innerText = solvedCount;
+            document.getElementById('stat-assisted').innerText = assistedCount;
+            document.getElementById('req-count-label').innerText = `${totalWorked} / ${targetReq}`;
+
+            const badge = document.getElementById('completion-badge');
+            if (totalWorked >= targetReq) {
+                badge.innerText = "Requerimiento Cumplido";
+                badge.className = "px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-xs";
+            } else {
+                badge.innerText = "En Progreso";
+                badge.className = "px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium text-xs";
+            }
+        }
+
+        function renderCards() {
+            const container = document.getElementById('exercises-container');
+            container.innerHTML = '';
+
+            const filtered = EXERCISES_DATA.filter(ex => {
+                if (state.activeFilter === 'all') return true;
+                return ex.topic === state.activeFilter;
+            });
+
+            filtered.forEach(ex => {
+                const prog = state.userProgress[ex.id] || { status: 'unstarted', attempts: 0, hintsUsed: 0 };
+                
+                let statusBadgeHTML = '';
+                if (prog.status === 'unstarted') {
+                    statusBadgeHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 flex items-center gap-1"><i data-lucide="circle" class="w-3 h-3"></i> Sin iniciar</span>`;
+                } else if (prog.status === 'in_progress') {
+                    statusBadgeHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> En proceso</span>`;
+                } else if (prog.status === 'solved') {
+                    statusBadgeHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Resuelto</span>`;
+                } else if (prog.status === 'assisted') {
+                    statusBadgeHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 flex items-center gap-1"><i data-lucide="help-circle" class="w-3 h-3"></i> Revisado con apoyo</span>`;
+                }
+
+                let discHTML = '';
+                if (ex.discrepancyNote) {
+                    discHTML = `
+                    <div class="mt-2 p-2.5 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-900 flex items-start gap-1.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-purple-600 shrink-0 mt-0.5"></i>
+                        <span>${ex.discrepancyNote}</span>
+                    </div>`;
+                }
+
+                let inputsHTML = '';
+                if (ex.isMultipleChoice) {
+                    inputsHTML = `
+                    <div class="space-y-2 mt-3">
+                        <label class="block text-xs font-semibold text-slate-700">Selecciona la opción correcta:</label>
+                        ${ex.mcOptions.map(opt => `
+                            <label class="flex items-center space-x-2 p-2 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer text-xs">
+                                <input type="radio" name="mc-${ex.id}" value="${opt.val}" ${prog.inputs['choice'] === opt.val ? 'checked' : ''} class="text-indigo-600 focus:ring-indigo-500">
+                                <span>${opt.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>`;
+                } else {
+                    inputsHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                        ${ex.variables.map(v => `
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">${v.label}:</label>
+                                <div class="flex rounded-md shadow-sm">
+                                    <input type="text" id="input-${ex.id}-${v.id}" value="${prog.inputs[v.id] || ''}" placeholder="Ej. -0.2" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-l-md focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                    <select id="unit-${ex.id}-${v.id}" class="bg-slate-100 border border-l-0 border-slate-300 rounded-r-md px-2 py-1.5 text-xs text-slate-700 font-medium focus:outline-none">
+                                        ${v.allowedUnits.map(u => `<option value="${u}" ${v.defaultUnit === u ? 'selected' : ''}>${u}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div id="feedback-${ex.id}-${v.id}" class="text-[11px] mt-1 font-medium hidden"></div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
+                let hintsHTML = '';
+                if (prog.hintsUsed > 0) {
+                    hintsHTML = `<div class="mt-3 space-y-2">`;
+                    for (let i = 0; i < prog.hintsUsed; i++) {
+                        hintsHTML += `
+                        <div class="p-2.5 bg-amber-50/80 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                            <div><strong>Pista ${i + 1}:</strong> ${ex.hints[i]}</div>
+                        </div>`;
+                    }
+                    hintsHTML += `</div>`;
+                }
+
+                let solutionHTML = '';
+                if (prog.solutionUnlocked) {
+                    solutionHTML = `
+                    <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-950">
+                        <div class="font-bold flex items-center gap-1 mb-1 text-emerald-800">
+                            <i data-lucide="check-square" class="w-4 h-4"></i> Solución Detallada Oficial:
+                        </div>
+                        <div class="whitespace-pre-wrap font-sans text-xs leading-relaxed">${ex.solution}</div>
+                    </div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden";
+                card.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-sm font-bold text-slate-900 leading-snug">${ex.title}</h3>
+                            ${statusBadgeHTML}
+                        </div>
+                        
+                        <p class="text-xs text-slate-600 mb-4">${ex.statement}</p>
+                        
+                        ${discHTML}
+
+                        <div class="relative group my-3">
+                            <div class="circuit-svg p-2 border border-slate-200 rounded-lg flex justify-center items-center">
+                                ${ex.svg}
+                            </div>
+                            <button onclick="openZoomModal(${ex.id})" class="absolute top-2 right-2 p-1.5 bg-white/90 shadow rounded-md text-slate-600 hover:text-indigo-600 text-xs flex items-center gap-1 opacity-90 group-hover:opacity-100 transition">
+                                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Ampliar
+                            </button>
+                        </div>
+
+                        ${inputsHTML}
+                        ${hintsHTML}
+                        ${solutionHTML}
+                    </div>
+
+                    <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <button onclick="checkExercise(${ex.id})" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i> Verificar
+                            </button>
+                            
+                            <button onclick="requestHint(${ex.id})" ${prog.hintsUsed >= 3 ? 'disabled class="opacity-50 cursor-not-allowed px-3 py-1.5 text-slate-400 text-xs flex items-center gap-1"' : 'class="px-3 py-1.5 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium transition flex items-center gap-1"'}>
+                                <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-500"></i> Pista (${prog.hintsUsed}/3)
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            ${(prog.attempts >= 1 && prog.hintsUsed >= 1 && !prog.solutionUnlocked) ? `
+                                <button onclick="unlockSolution(${ex.id})" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> Ver Solución
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+            renderMath(container);
+        }
+
+        // =========================================================================
+        // 6. INTERACTION & CHECKING LOGIC WITH MATH RENDER HOOKS
+        // =========================================================================
+        function filterTopic(topic) {
+            state.activeFilter = topic;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn text-xs font-semibold px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition";
+            });
+            event.target.className = "filter-btn active text-xs font-semibold px-4 py-2 rounded-lg bg-indigo-600 text-white shadow-sm transition";
+            renderCards();
+        }
+
+        function toggleInstructions() {
+            const content = document.getElementById('instructions-content');
+            const chevron = document.getElementById('inst-chevron');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+                renderMath(content);
+            } else {
+                content.classList.add('hidden');
+                chevron.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        function checkExercise(id) {
+            const ex = EXERCISES_DATA.find(item => item.id === id);
+            const prog = state.userProgress[id];
+            prog.attempts++;
+
+            let allCorrect = true;
+
+            if (ex.isMultipleChoice) {
+                const selectedRadio = document.querySelector(`input[name="mc-${id}"]:checked`);
+                if (!selectedRadio) {
+                    alert("Por favor selecciona una opción antes de verificar.");
+                    return;
+                }
+                const choiceVal = selectedRadio.value;
+                prog.inputs['choice'] = choiceVal;
+                allCorrect = (choiceVal === ex.variables[0].targetChoice);
+            } else {
+                ex.variables.forEach(v => {
+                    const inputEl = document.getElementById(`input-${id}-${v.id}`);
+                    const unitEl = document.getElementById(`unit-${id}-${v.id}`);
+                    const feedbackEl = document.getElementById(`feedback-${id}-${v.id}`);
+
+                    const rawVal = inputEl.value.trim();
+                    const unitVal = unitEl.value;
+                    prog.inputs[v.id] = rawVal;
+
+                    const numVal = parseUnitValue(rawVal, unitVal);
+                    const targetBaseVal = parseUnitValue(v.targetVal, v.defaultUnit);
+
+                    feedbackEl.classList.remove('hidden');
+                    if (numVal !== null && validateValue(numVal, targetBaseVal)) {
+                        feedbackEl.className = "text-[11px] mt-1 font-semibold text-emerald-600 flex items-center gap-1";
+                        feedbackEl.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> ¡Correcto!`;
+                    } else {
+                        allCorrect = false;
+                        feedbackEl.className = "text-[11px] mt-1 font-semibold text-red-500 flex items-center gap-1";
+                        feedbackEl.innerHTML = `<i data-lucide="x" class="w-3 h-3"></i> Revisa el cálculo o signo.`;
+                    }
+                });
+            }
+
+            if (allCorrect) {
+                if (prog.status !== 'assisted') {
+                    prog.status = 'solved';
+                }
+            } else {
+                if (prog.status === 'unstarted') {
+                    prog.status = 'in_progress';
+                }
+            }
+
+            saveState();
+            renderCards();
+        }
+
+        function requestHint(id) {
+            const prog = state.userProgress[id];
+            if (prog.hintsUsed < 3) {
+                prog.hintsUsed++;
+                if (prog.status === 'unstarted') prog.status = 'in_progress';
+                saveState();
+                renderCards();
+            }
+        }
+
+        function unlockSolution(id) {
+            currentActiveQuizExId = id;
+            const ex = EXERCISES_DATA.find(item => item.id === id);
+            
+            document.getElementById('quiz-question-text').innerHTML = ex.quiz.q;
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = ex.quiz.options.map((opt, idx) => `
+                <label class="flex items-center space-x-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer text-xs transition">
+                    <input type="radio" name="quiz-radio" value="${idx}" class="text-amber-600 focus:ring-amber-500">
+                    <span class="text-slate-700 font-medium">${opt}</span>
+                </label>
+            `).join('');
+
+            document.getElementById('quiz-error').classList.add('hidden');
+            const modalQuiz = document.getElementById('modal-quiz');
+            modalQuiz.classList.remove('hidden');
+            renderMath(modalQuiz);
+        }
+
+        function closeQuizModal() {
+            document.getElementById('modal-quiz').classList.add('hidden');
+            currentActiveQuizExId = null;
+        }
+
+        function submitQuizAnswer() {
+            if (!currentActiveQuizExId) return;
+            const selected = document.querySelector('input[name="quiz-radio"]:checked');
+            if (!selected) {
+                alert("Por favor selecciona una respuesta para demostrar comprensión.");
+                return;
+            }
+
+            const ex = EXERCISES_DATA.find(item => item.id === currentActiveQuizExId);
+            const userChoiceIdx = parseInt(selected.value);
+
+            if (userChoiceIdx === ex.quiz.correctIndex) {
+                const prog = state.userProgress[currentActiveQuizExId];
+                prog.solutionUnlocked = true;
+                prog.quizPassed = true;
+                prog.status = 'assisted';
+                saveState();
+                closeQuizModal();
+                renderCards();
+            } else {
+                document.getElementById('quiz-error').classList.remove('hidden');
+            }
+        }
+
+        function openZoomModal(id) {
+            const ex = EXERCISES_DATA.find(item => item.id === id);
+            document.getElementById('modal-zoom-title').innerText = `${ex.title} - Vista Ampliada`;
+            document.getElementById('modal-zoom-svg-container').innerHTML = ex.svg;
+            document.getElementById('modal-zoom').classList.remove('hidden');
+        }
+
+        function closeZoomModal() {
+            document.getElementById('modal-zoom').classList.add('hidden');
+        }
+
+        function toggleProfModal() {
+            const modal = document.getElementById('modal-prof');
+            modal.classList.toggle('hidden');
+        }
+
+        function saveProfSettings() {
+            const val = parseInt(document.getElementById('prof-min-req').value);
+            if (val >= 1 && val <= 10) {
+                state.profMinRequired = val;
+                saveState();
+                toggleProfModal();
+                alert(`Configuración guardada: El mínimo requerido se ajustó a ${val} ejercicios.`);
+            }
+        }
+
+        function openCertModal() {
+            document.getElementById('modal-cert').classList.remove('hidden');
+        }
+
+        function closeCertModal() {
+            document.getElementById('modal-cert').classList.add('hidden');
+        }
+
+        function generatePrintableCert() {
+            const name = document.getElementById('student-name').value.trim();
+            const idCode = document.getElementById('student-id').value.trim();
+            const refl = document.getElementById('student-reflection').value.trim();
+
+            if (!name || !idCode || !refl) {
+                alert("Por favor completa tu nombre, matrícula y la reflexión final antes de imprimir.");
+                return;
+            }
+
+            document.getElementById('print-student-name').innerText = name;
+            document.getElementById('print-student-id').innerText = idCode;
+            document.getElementById('print-date').innerText = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('print-reflection-text').innerText = `"${refl}"`;
+
+            let workedCount = 0;
+            const tableBody = document.getElementById('print-table-body');
+            tableBody.innerHTML = '';
+
+            EXERCISES_DATA.forEach(ex => {
+                const prog = state.userProgress[ex.id] || {};
+                let statusText = "Sin iniciar";
+                if (prog.status === 'solved') statusText = "Resuelto Correctamente";
+                if (prog.status === 'assisted') statusText = "Revisado con Apoyo (Quiz Aprobado)";
+                if (prog.status === 'in_progress') statusText = "En Proceso";
+
+                if (prog.status === 'solved' || prog.status === 'assisted') workedCount++;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-slate-300 p-2 text-center font-bold">${ex.id}</td>
+                    <td class="border border-slate-300 p-2">${ex.title}</td>
+                    <td class="border border-slate-300 p-2 font-medium">${statusText}</td>
+                    <td class="border border-slate-300 p-2 text-center">${prog.attempts || 0}</td>
+                    <td class="border border-slate-300 p-2">${prog.solutionUnlocked ? 'Solución Oficial Consultada' : 'Independiente'}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            document.getElementById('print-completed-ratio').innerText = `${workedCount} de ${state.profMinRequired} requeridos (${Math.round((workedCount/state.profMinRequired)*100)}%)`;
+
+            closeCertModal();
+            window.print();
+        }
+
+        window.onload = function() {
+            loadState();
+            updateDashboard();
+            renderCards();
+            renderMath(document.body);
+        };
+    </script>
+</body>
+</html>
